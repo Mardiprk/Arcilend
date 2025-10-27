@@ -93,7 +93,7 @@ let user_account = &ctx.accounts.user_account;
         let lending_pool = &mut ctx.accounts.lending_pool;
         let loan = &mut ctx.accounts.loan;
         let clock = Clock::get()?;
-        
+
         Ok(())
     }
 
@@ -184,7 +184,7 @@ pub struct UpdateCreditScore<'info> {
 
     #[account(
         mut,
-        seeds = [USER_ACCOUNT_SEED, user.key().as_ref()],
+        seeds = [USER_ACCOUNT_SEED, user_account.key().as_ref()],
         bump = user_account.bump,
     )]
     pub user_account: Account<'info, UserAccount>,
@@ -205,9 +205,9 @@ pub struct Borrow<'info> {
 
     #[account(
         mut,
-        seeds = [USER_ACCOUNT_SEED, user.key().as_ref()],
+        seeds = [USER_ACCOUNT_SEED, borrower.key().as_ref()],
         bump = user_account.bump,
-        constraint = user_account.owner == user.key()
+        constraint = user_account.owner == borrower.key()
     )]
     pub user_account: Account<'info, UserAccount>,
 
