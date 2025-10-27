@@ -7,47 +7,104 @@ declare_id!("CfuTSUUVQnPrMjSLwSoERGaDrAojWBfZ4UhCWAUNxuff");
 pub mod arcilend {
     use super::*;
 
-    pub fn initialize_pool(ctx: Context<InitializePool>, interest_rate: u16, collateral_ratio: u16, liquidation_threshold: u16) -> Result<()> {
+    pub fn initialize_pool(
+        ctx: Context<InitializePool>,
+        interest_rate: u16, collateral_ratio: u16,
+        liquidation_threshold: u16
+    ) -> Result<()> {
+        require!(
+            collateral_ratio >= MIN_COLLATERAL_RATIO && collateral_ratio <= MAX_COLLATERAL_RATIO,
+            ArciLendError::InvalidCollateralRatio);
+        require!(
+            interest_rate <= BASIS_POINTS,
+            ArciLendError::InvalidInterestRate
+        );
+        require!(
+            liquidation_threshold < collateral_ratio,
+            ArciLendError::InvalidLiquidationThreshold
+        );
+
+        let lending_pool = &mut ctx.accounts.lending_pool;
+        
+        lending_pool.authority = ctx.accounts.authority.key();
+        lending_pool.total_deposits = 0;
+        lending_pool.total_borrowed = 0;
+        lending_pool.interest_rate = interest_rate;
+        lending_pool.collateral_ratio = collateral_ratio;
+        lending_pool.liquidation_threshold = liquidation_threshold;
+        lending_pool.arcium_mcp_pubkey = ctx.accounts.arcium_mpc_pubkey.key();
+        lending_pool.oracle_feed = ctx.accounts.oracle_feed.key();
+        lending_pool.bump = ctx.bumps.lending_pool;
+        lending_pool.utilization_rate = 0;
+        lending_pool.total_fees = 0;
+
+        msg!("Lending pool initialized!");
+        msg!("Interest Rate {}bps", interest_rate);
+        msg!("Collateral Rate {}", collateral_ratio / 100);
 
         Ok(())
     }
     pub fn deposit_collateral(ctx: Context<DepositCollateral>, anount: u64) -> Result<()>{
+        let user_account = &ctx.accounts.user_account;
+        let lending_pool = &mut ctx.accounts.lending_pool;
 
         Ok(())
     }
 
     pub fn request_credit_score(ctx: Context<RequestCreditScore>) -> Result<()>{
+        let user_account = &ctx.accounts.user_account;
 
         Ok(())
     }
 
     pub fn update_credit_score(ctx: Context<UpdateCreditScore>, encrypted_score: [u8;32], risk_ajusted_ltv: u16) -> Result<()>{
+        let user_account = &ctx.accounts.user_account;
+        let lending_pool = &mut ctx.accounts.lending_pool;
 
         Ok(())
     }
 
     pub fn borrow(ctx: Context<Borrow>, amount: u64) -> Result<()>{
+        let user_account = &ctx.accounts.user_account;
+        let lending_pool = &mut ctx.accounts.lending_pool;
+        let loan = &mut ctx.accounts.loan;
+        let clock = Clock::get()?;
 
         Ok(())
     }
 
     pub fn repay(ctx: Context<Repay>, amount: u64) -> Result<()>{
+let user_account = &ctx.accounts.user_account;
+        let lending_pool = &mut ctx.accounts.lending_pool;
+        let loan = &mut ctx.accounts.loan;
+        let clock = Clock::get()?;
 
         Ok(())
     }
 
     pub fn withdraw_collateral(ctx: Context<WithdrawCollateral>, amount: u64) -> Result<()>{
-
+        let user_account = &ctx.accounts.user_account;
+        let lending_pool = &mut ctx.accounts.lending_pool;
+        
         Ok(())
     }
 
     pub fn liquidate(ctx: Context<Liquidate>) -> Result<()>{
-
+        let lending_pool = &mut ctx.accounts.lending_pool;
+        let loan = &mut ctx.accounts.loan;
+        let clock = Clock::get()?;
+        
         Ok(())
     }
 
     pub fn accure_interest(ctx: Context<AccrueInterest>) -> Result<()>{
-        
+        let loan = &mut ctx.accounts.loan;
+        let clock = Clock::get()?;
+
+        loan.accrue_interest(clock.unix_timestamp);
+
+        msg!("Interest accrued: {} lamports", loan.accrued_interest);
+
         Ok(())
     }
 }
